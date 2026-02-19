@@ -16,10 +16,12 @@ pub mod vault {
     
     pub fn initialize_config(
         ctx: Context<InitializeConfig>,
-        usdc_mint: Pubkey,
-        platform_fee_account: Pubkey,
         platform_fee_bps: u16,
     ) -> Result<()> {
-        ctx.accounts.init_config(usdc_mint, platform_fee_account, platform_fee_bps, ctx.bumps)
+        ctx.accounts.init_config(platform_fee_bps, ctx.bumps)
+    }
+
+    pub fn fund_treasury(ctx: Context<FundTreasury>, amount: u64) -> Result<()> {
+        ctx.accounts.fund_treasury(amount)
     }
 }
