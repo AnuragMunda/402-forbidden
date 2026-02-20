@@ -24,4 +24,14 @@ pub mod vault {
     pub fn fund_treasury(ctx: Context<FundTreasury>, amount: u64) -> Result<()> {
         ctx.accounts.fund_treasury(amount)
     }
+
+    pub fn create_arena(
+        ctx: Context<CreateArena>,
+        initial_prize: u64,
+        secret_hash: [u8; 32],
+        guess_fee: u64,
+        hint_fee: u64
+    ) -> Result<()> {
+        ctx.accounts.create_arena(initial_prize, secret_hash, guess_fee, hint_fee, ctx.bumps)
+    }
 }
