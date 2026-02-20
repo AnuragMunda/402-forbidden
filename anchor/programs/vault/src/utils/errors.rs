@@ -4,8 +4,10 @@ use anchor_lang::prelude::*;
 pub enum GameError {
     #[msg("Invalid Amount")]
     InvalidAmount,
-    #[msg("Insufficient Balance available")]
-    InsufficientFunds,
+    #[msg("Insufficient balance available")]
+    InsufficientBalance,
     #[msg("Invalid fee")]
     InvalidFee,
+    #[msg("Low treasury balance")]
+    InsufficientTreasuryFunds,
 }

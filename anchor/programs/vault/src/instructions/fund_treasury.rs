@@ -44,7 +44,7 @@ impl<'info> FundTreasury<'info> {
         amount: u64,
     ) -> Result<()> {
         require!(amount > 0u64, GameError::InvalidAmount);
-        require!(self.admin_ata.amount >= amount, GameError::InsufficientFunds);
+        require!(self.admin_ata.amount >= amount, GameError::InsufficientBalance);
 
         // Transfer funds to treasury
         let cpi_program = self.token_program.to_account_info();
