@@ -43,7 +43,7 @@ impl<'info> InitializeConfig<'info> {
         // Set the config states
         self.config.set_inner(Config {
             admin: self.admin.key(),
-            arena_count: 0u8,
+            arena_count: 0,
             mint: self.mint.key(),
             treasury_ata: self.treasury_ata.key(),
             platform_fee_bps,

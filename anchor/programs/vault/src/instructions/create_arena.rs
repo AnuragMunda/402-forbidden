@@ -58,28 +58,27 @@ impl<'info> CreateArena<'info> {
         hint_fee: u64,
         bumps: CreateArenaBumps
     ) -> Result<()> {
-        require!(initial_prize > 0 || guess_fee > 0 || hint_fee > 0, GameError::InvalidAmount);
-        require!(self.treasury_ata.amount > initial_prize, GameError::InsufficientTreasuryFunds);
+        require!(initial_prize > 0 && guess_fee > 0 && hint_fee > 0, GameError::InvalidAmount);
+        require!(self.treasury_ata.amount >= initial_prize, GameError::InsufficientTreasuryFunds);
 
         // Transfer tokens from treasury -> vault
         let cpi_program = self.token_program.to_account_info();
         let cpi_accounts = Transfer {
             from: self.treasury_ata.to_account_info(),
             to: self.vault_ata.to_account_info(),
-            authority: self.arena.to_account_info()
+            authority: self.config.to_account_info()
         };
 
-        let seed = self.config.arena_count.to_le_bytes();
-
-        let signer_seeds: &[&[&[u8]]] = &[&[b"arena", seed.as_ref(), &[bumps.arena]]];
+        let signer_seeds: &[&[&[u8]]] = &[&[b"config", &[self.config.bump]]];
 
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
         transfer(cpi_ctx, initial_prize)?;
 
+        // Set the arena states
         self.arena.set_inner(ChallengeArena {
             arena_id: self.config.arena_count,
-            round_id: 1,
+            winner: None,
             initial_prize,
             secret_hash,
             vault_ata: self.vault_ata.key(),
@@ -88,6 +87,8 @@ impl<'info> CreateArena<'info> {
             is_active: true,
             bump: bumps.arena
         });
+
+        self.config.arena_count = self.config.arena_count.checked_add(1).ok_or(GameError::ArenaOverflow)?;
 
         Ok(())
     }

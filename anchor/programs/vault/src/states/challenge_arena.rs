@@ -4,8 +4,8 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(InitSpace)]
 pub struct ChallengeArena {
-    pub arena_id: u8, // The id of the Arena
-    pub round_id: u64, // The id of current round
+    pub arena_id: u32, // The id of the Arena
+    pub winner: Option<Pubkey>, // Winner of this arena
     pub initial_prize: u64, // The initial amount stored in vault as prize money
     pub secret_hash: [u8; 32], // The hash of the real secret/password
     pub vault_ata: Pubkey, // The ATA for the vault
