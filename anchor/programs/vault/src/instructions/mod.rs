@@ -6,3 +6,6 @@ pub use fund_treasury::*;
 
 pub mod create_arena;
 pub use create_arena::*;
+
+pub mod verify_guess;
+pub use verify_guess::*;

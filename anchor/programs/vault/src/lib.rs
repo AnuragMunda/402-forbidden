@@ -34,4 +34,8 @@ pub mod vault {
     ) -> Result<()> {
         ctx.accounts.create_arena(initial_prize, secret_hash, guess_fee, hint_fee, ctx.bumps)
     }
+
+    pub fn verify_guess(ctx: Context<VerifyGuess>, hashed_guess: [u8; 32]) -> Result<()> {
+        ctx.accounts.verify_guess(hashed_guess)
+    }
 }
