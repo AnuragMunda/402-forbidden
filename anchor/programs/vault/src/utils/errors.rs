@@ -10,4 +10,10 @@ pub enum GameError {
     InvalidFee,
     #[msg("Low treasury balance")]
     InsufficientTreasuryFunds,
+    #[msg("Overflow")]
+    ArenaOverflow,
+    #[msg("Arena not active")]
+    ArenaInactive,
+    #[msg("Vault is empty")]
+    EmptyVault,
 }
