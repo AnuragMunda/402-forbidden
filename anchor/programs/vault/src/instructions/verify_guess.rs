@@ -1,10 +1,17 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::AssociatedToken, 
-    token::{Mint, Token, TokenAccount, Transfer, transfer}
+    associated_token::AssociatedToken,
+    token::{transfer, Mint, Token, TokenAccount, Transfer},
 };
 
-use crate::{states::{ChallengeArena, Config, MAX_BPS}, utils::{GameError, events::{GuessConfirmed, GuessRejected}}};
+use crate::{
+    states::{ChallengeArena, Config, MAX_BPS},
+    utils::{
+        checked_mul_div,
+        events::{GuessConfirmed, GuessRejected},
+        GameError,
+    },
+};
 
 #[derive(Accounts)]
 pub struct VerifyGuess<'info> {
@@ -53,14 +60,11 @@ pub struct VerifyGuess<'info> {
 
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>
+    pub system_program: Program<'info, System>,
 }
 
 impl<'info> VerifyGuess<'info> {
-    pub fn verify_guess(
-        &mut self,
-        hashed_guess: [u8; 32]
-    ) -> Result<()> {
+    pub fn verify_guess(&mut self, hashed_guess: [u8; 32]) -> Result<()> {
         require!(self.arena.is_active, GameError::ArenaInactive);
 
         let is_winner = hashed_guess == self.arena.secret_hash;
@@ -71,10 +75,10 @@ impl<'info> VerifyGuess<'info> {
                 self.arena.winner = Some(self.player.key());
                 self.arena.final_prize = self.vault_ata.amount;
                 self.payout_winner()?;
-            },
+            }
             false => self.apply_wrong_guess_fee()?,
         };
-        
+
         Ok(())
     }
 
@@ -83,12 +87,12 @@ impl<'info> VerifyGuess<'info> {
         let arena = &self.arena;
 
         require!(vault_amount > 0, GameError::EmptyVault);
-        
+
         let cpi_program = self.token_program.to_account_info();
         let cpi_accounts = Transfer {
             from: self.vault_ata.to_account_info(),
             to: self.player_ata.to_account_info(),
-            authority: arena.to_account_info()
+            authority: arena.to_account_info(),
         };
 
         let seed = arena.arena_id.to_le_bytes();
@@ -115,13 +119,18 @@ impl<'info> VerifyGuess<'info> {
         let vault_cpi_accounts = Transfer {
             from: self.player_ata.to_account_info(),
             to: self.vault_ata.to_account_info(),
-            authority: self.player.to_account_info()
+            authority: self.player.to_account_info(),
         };
 
         let vault_cpi_ctx = CpiContext::new(cpi_program, vault_cpi_accounts);
-        
-        let platform_fee = checked_mul_div(arena.guess_fee, config.platform_fee_bps.into(), MAX_BPS.into())?;
-        let vault_share = arena.guess_fee
+
+        let platform_fee = checked_mul_div(
+            arena.guess_fee,
+            config.platform_fee_bps.into(),
+            MAX_BPS.into(),
+        )?;
+        let vault_share = arena
+            .guess_fee
             .checked_sub(platform_fee)
             .ok_or(GameError::ArenaOverflow)?;
 
@@ -131,7 +140,10 @@ impl<'info> VerifyGuess<'info> {
             .checked_add(platform_fee)
             .ok_or(GameError::ArenaOverflow)?;
 
-        require!(self.player_ata.amount >= total, GameError::InsufficientBalance);
+        require!(
+            self.player_ata.amount >= total,
+            GameError::InsufficientBalance
+        );
 
         transfer(vault_cpi_ctx, vault_share)?;
         self.deduct_platform_fee(platform_fee)?;
@@ -142,7 +154,6 @@ impl<'info> VerifyGuess<'info> {
         });
 
         Ok(())
-        
     }
 
     pub fn deduct_platform_fee(&self, platform_fee: u64) -> Result<()> {
@@ -155,17 +166,11 @@ impl<'info> VerifyGuess<'info> {
         let platform_cpi_accounts = Transfer {
             from: self.player_ata.to_account_info(),
             to: self.treasury_ata.to_account_info(),
-            authority: self.player.to_account_info()
+            authority: self.player.to_account_info(),
         };
 
         let platform_cpi_ctx = CpiContext::new(cpi_program, platform_cpi_accounts);
 
         transfer(platform_cpi_ctx, platform_fee)
     }
-}
-
-fn checked_mul_div(x: u64, y: u64, z: u64) -> Result<u64> {
-    let mul_res = x.checked_mul(y).ok_or(GameError::ArenaOverflow)?;
-    let result = mul_res.checked_div(z).ok_or(GameError::ArenaOverflow)?;
-    Ok(result)
 }

@@ -1,7 +1,13 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, token::{Mint, Token, TokenAccount, Transfer, transfer}};
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{transfer, Mint, Token, TokenAccount, Transfer},
+};
 
-use crate::{states::{ChallengeArena, Config}, utils::{GameError, ArenaCreated}};
+use crate::{
+    states::{ChallengeArena, Config},
+    utils::{ArenaCreated, GameError},
+};
 
 #[derive(Accounts)]
 pub struct CreateArena<'info> {
@@ -15,7 +21,7 @@ pub struct CreateArena<'info> {
         bump = config.bump
     )]
     pub config: Account<'info, Config>,
-    
+
     #[account(
         init,
         payer = admin,
@@ -56,17 +62,23 @@ impl<'info> CreateArena<'info> {
         secret_hash: [u8; 32],
         guess_fee: u64,
         hint_fee: u64,
-        bumps: CreateArenaBumps
+        bumps: CreateArenaBumps,
     ) -> Result<()> {
-        require!(initial_prize > 0 && guess_fee > 0 && hint_fee > 0, GameError::InvalidAmount);
-        require!(self.treasury_ata.amount >= initial_prize, GameError::InsufficientTreasuryFunds);
+        require!(
+            initial_prize > 0 && guess_fee > 0 && hint_fee > 0,
+            GameError::InvalidAmount
+        );
+        require!(
+            self.treasury_ata.amount >= initial_prize,
+            GameError::InsufficientTreasuryFunds
+        );
 
         // Transfer tokens from treasury -> vault
         let cpi_program = self.token_program.to_account_info();
         let cpi_accounts = Transfer {
             from: self.treasury_ata.to_account_info(),
             to: self.vault_ata.to_account_info(),
-            authority: self.config.to_account_info()
+            authority: self.config.to_account_info(),
         };
 
         let signer_seeds: &[&[&[u8]]] = &[&[b"config", &[self.config.bump]]];
@@ -86,16 +98,20 @@ impl<'info> CreateArena<'info> {
             guess_fee,
             hint_fee,
             is_active: true,
-            bump: bumps.arena
+            bump: bumps.arena,
         });
 
-        self.config.arena_count = self.config.arena_count.checked_add(1).ok_or(GameError::ArenaOverflow)?;
+        self.config.arena_count = self
+            .config
+            .arena_count
+            .checked_add(1)
+            .ok_or(GameError::ArenaOverflow)?;
 
         emit!(ArenaCreated {
             arena_id: self.arena.arena_id,
             prize: initial_prize
         });
-        
+
         Ok(())
     }
 }

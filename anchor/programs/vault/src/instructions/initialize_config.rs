@@ -1,7 +1,13 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, token::{Mint, Token, TokenAccount}};
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{Mint, Token, TokenAccount},
+};
 
-use crate::{states::{BPS_CAP, Config}, utils::GameError};
+use crate::{
+    states::{Config, BPS_CAP},
+    utils::GameError,
+};
 
 #[derive(Accounts)]
 pub struct InitializeConfig<'info> {
@@ -26,7 +32,7 @@ pub struct InitializeConfig<'info> {
         associated_token::authority = config
     )]
     pub treasury_ata: Account<'info, TokenAccount>,
-    
+
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,

@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token, TokenAccount, Transfer, transfer};
+use anchor_spl::token::{transfer, Mint, Token, TokenAccount, Transfer};
 
 use crate::states::Config;
-use crate::utils::{GameError, events::TreasuryWithdrawn};
+use crate::utils::{events::TreasuryWithdrawn, GameError};
 
 #[derive(Accounts)]
 pub struct WithdrawTreasury<'info> {
@@ -40,16 +40,19 @@ pub struct WithdrawTreasury<'info> {
 impl<'info> WithdrawTreasury<'info> {
     pub fn withdraw_treasury(&mut self, amount: u64) -> Result<()> {
         let treasury = &self.treasury_ata;
-        let config = & self.config;
+        let config = &self.config;
 
-        require!(amount <= treasury.amount, GameError::InsufficientTreasuryFunds);
+        require!(
+            amount <= treasury.amount,
+            GameError::InsufficientTreasuryFunds
+        );
 
         let cpi_program = self.token_program.to_account_info();
 
         let cpi_accounts = Transfer {
             from: treasury.to_account_info(),
             to: self.admin_ata.to_account_info(),
-            authority: config.to_account_info()
+            authority: config.to_account_info(),
         };
 
         let signer_seeds: &[&[&[u8]]] = &[&[b"config", &[config.bump]]];
@@ -58,9 +61,7 @@ impl<'info> WithdrawTreasury<'info> {
 
         transfer(cpi_ctx, amount)?;
 
-        emit!(TreasuryWithdrawn {
-            amount
-        });
+        emit!(TreasuryWithdrawn { amount });
 
         Ok(())
     }
