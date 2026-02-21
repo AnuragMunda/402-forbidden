@@ -80,6 +80,7 @@ impl<'info> CreateArena<'info> {
             arena_id: self.config.arena_count,
             winner: None,
             initial_prize,
+            final_prize: 0,
             secret_hash,
             vault_ata: self.vault_ata.key(),
             guess_fee,

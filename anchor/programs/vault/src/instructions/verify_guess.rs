@@ -69,6 +69,7 @@ impl<'info> VerifyGuess<'info> {
             true => {
                 self.arena.is_active = false;
                 self.arena.winner = Some(self.player.key());
+                self.arena.final_prize = self.vault_ata.amount;
                 self.payout_winner()?;
             },
             false => self.apply_wrong_guess_fee()?,
