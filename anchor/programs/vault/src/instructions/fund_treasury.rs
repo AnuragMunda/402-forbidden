@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer, transfer};
 
 use crate::states::Config;
-use crate::utils::GameError;
+use crate::utils::{GameError, events::TreasuryFunded};
 
 #[derive(Accounts)]
 pub struct FundTreasury<'info> {
@@ -56,6 +56,12 @@ impl<'info> FundTreasury<'info> {
 
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
 
-        transfer(cpi_ctx, amount)
+        transfer(cpi_ctx, amount)?;
+
+        emit!(TreasuryFunded {
+            amount
+        });
+
+        Ok(())
     }
 }

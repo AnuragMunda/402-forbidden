@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token::{Mint, Token, TokenAccount, Transfer, transfer}};
 
-use crate::{states::{ChallengeArena, Config}, utils::GameError};
+use crate::{states::{ChallengeArena, Config}, utils::{GameError, ArenaCreated}};
 
 #[derive(Accounts)]
 pub struct CreateArena<'info> {
@@ -91,6 +91,11 @@ impl<'info> CreateArena<'info> {
 
         self.config.arena_count = self.config.arena_count.checked_add(1).ok_or(GameError::ArenaOverflow)?;
 
+        emit!(ArenaCreated {
+            arena_id: self.arena.arena_id,
+            prize: initial_prize
+        });
+        
         Ok(())
     }
 }

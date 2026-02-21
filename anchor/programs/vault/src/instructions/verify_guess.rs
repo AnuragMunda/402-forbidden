@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount, Transfer, transfer}
 };
 
-use crate::{states::{ChallengeArena, Config, MAX_BPS}, utils::GameError};
+use crate::{states::{ChallengeArena, Config, MAX_BPS}, utils::{GameError, events::{GuessConfirmed, GuessRejected}}};
 
 #[derive(Accounts)]
 pub struct VerifyGuess<'info> {
@@ -95,7 +95,15 @@ impl<'info> VerifyGuess<'info> {
         let signer_seeds: &[&[&[u8]]] = &[&[b"arena", seed.as_ref(), &[arena.bump]]];
 
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
-        transfer(cpi_ctx, vault_amount)
+        transfer(cpi_ctx, vault_amount)?;
+
+        emit!(GuessConfirmed {
+            arena_id: arena.arena_id,
+            winner: self.player.key(),
+            prize: vault_amount
+        });
+
+        Ok(())
     }
 
     pub fn apply_wrong_guess_fee(&self) -> Result<()> {
@@ -126,7 +134,14 @@ impl<'info> VerifyGuess<'info> {
         require!(self.player_ata.amount >= total, GameError::InsufficientBalance);
 
         transfer(vault_cpi_ctx, vault_share)?;
-        self.deduct_platform_fee(platform_fee)
+        self.deduct_platform_fee(platform_fee)?;
+
+        emit!(GuessRejected {
+            arena_id: arena.arena_id,
+            player: self.player.key()
+        });
+
+        Ok(())
         
     }
 

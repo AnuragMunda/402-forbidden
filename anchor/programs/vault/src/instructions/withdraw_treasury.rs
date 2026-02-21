@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer, transfer};
 
 use crate::states::Config;
-use crate::utils::GameError;
+use crate::utils::{GameError, events::TreasuryWithdrawn};
 
 #[derive(Accounts)]
 pub struct WithdrawTreasury<'info> {
@@ -56,6 +56,12 @@ impl<'info> WithdrawTreasury<'info> {
 
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
-        transfer(cpi_ctx, amount)
+        transfer(cpi_ctx, amount)?;
+
+        emit!(TreasuryWithdrawn {
+            amount
+        });
+
+        Ok(())
     }
 }
