@@ -38,4 +38,8 @@ pub mod vault {
     pub fn verify_guess(ctx: Context<VerifyGuess>, hashed_guess: [u8; 32]) -> Result<()> {
         ctx.accounts.verify_guess(hashed_guess)
     }
+
+    pub fn withdraw_treasury(ctx: Context<WithdrawTreasury>, amount: u64) -> Result<()> {
+        ctx.accounts.withdraw_treasury(amount)
+    }
 }
